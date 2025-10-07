@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mr. York Resources</title>
+<meta name="description" content="Quick links to Mr. York's class apps and practice tools.">
+<style>
+  :root { --bg:#0b1a2a; --card:#0f2742; --ink:#e7f2ff; --muted:#a9c6e8; --accent:#5cc7ff; --edge:#1d3a5c; --ok:#3ff2a8; }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif}
+  .wrap{max-width:1100px;margin:auto;padding:24px}
+  .header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  h1{margin:0;font-size:28px}
+  .sub{color:var(--muted);margin:4px 0 0}
+  .tools{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+  input[type="search"]{
+    width:260px;max-width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--edge);
+    background:#0a1f39;color:var(--ink)
+  }
+  .chip{border:1px solid var(--edge);border-radius:999px;padding:.35rem .7rem;background:#0a1f39;color:var(--muted);font-size:13px;cursor:pointer}
+  .chip.active{border-color:var(--accent);color:var(--ink)}
+  .grid{display:grid;gap:16px;margin-top:18px}
+  @media (min-width:720px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (min-width:1024px){ .grid{grid-template-columns:repeat(3,1fr)} }
+  .card{
+    background:var(--card);border:1px solid var(--edge);border-radius:16px;padding:16px;
+    display:flex;flex-direction:column;gap:10px;min-height:180px;
+    box-shadow:0 6px 18px rgba(0,0,0,.25)
+  }
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  .title{font-weight:800;font-size:18px;display:flex;align-items:center;gap:10px}
+  .badge{font-size:12px;border:1px solid var(--edge);padding:.15rem .4rem;border-radius:6px;color:var(--muted)}
+  .desc{color:var(--muted);font-size:14px;min-height:38px}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .btn{cursor:pointer;border:1px solid var(--edge);background:#102f52;color:var(--ink);padding:10px 12px;border-radius:10px;font-weight:700}
+  .btn.primary{background:linear-gradient(180deg,#169bf0,#1177c3);border:0}
+  .btn.ghost{background:#0a1f39}
+  .fav{cursor:pointer;border:1px solid var(--edge);background:#0a1f39;border-radius:10px;padding:8px 10px;color:#ffd966}
+  .fav.active{outline:2px solid #ffd966}
+  .sectionTitle{margin:24px 0 8px;font-size:18px;color:var(--muted)}
+  .small{font-size:12px;color:var(--muted)}
+  .ok{color:var(--ok)}
+  footer{margin-top:28px;border-top:1px solid var(--edge);padding-top:12px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div>
+      <h1>Mr. York Resources</h1>
+      <p class="sub">Quick links to class apps: speaking coaches, picture prompts, fluency tools, and more.</p>
+    </div>
+    <div class="tools">
+      <input id="search" type="search" placeholder="Search apps…" aria-label="Search apps">
+      <button class="chip active" data-tag="all">All</button>
+      <button class="chip" data-tag="speaking">Speaking</button>
+      <button class="chip" data-tag="practice">Practice</button>
+      <button class="chip" data-tag="utility">Utility</button>
+    </div>
+  </header>
+
+  <h2 class="sectionTitle">⭐ Favorites</h2>
+  <div id="favGrid" class="grid"></div>
+
+  <h2 class="sectionTitle">All Apps</h2>
+  <div id="appGrid" class="grid"></div>
+
+  <footer>
+    <span class="small">Tip: Click ⭐ to pin apps to the top. Your favorites are saved on this device.</span>
+    <span class="small">GitHub Pages • <span id="status" class="ok">Online</span></span>
+  </footer>
+</div>
+
+<script>
+/* ======= Edit your apps here ======= */
+/* Use absolute URLs (https://...) or repo-relative (/my-repo/app/). */
+const APPS = [
+  {
+    id:"picture-speaking",
+    title:"Picture Speaking Coach",
+    href:"/picture-speaking-coach/speaking-coach-with-pictures/",
+    desc:"Look at a picture and answer WH-questions (EN + ES). Includes ‘New Prompt’ to rotate scenes.",
+    tag:"speaking",
+    emoji:"🖼️"
+  },
+  {
+    id:"one-minute",
+    title:"1-Minute Speaking Coach",
+    href:"/bilingual-speaking-coach/", /* update if different */
+    desc:"Timed speaking with transcript, WPM, and filler counts.",
+    tag:"speaking",
+    emoji:"⏱️"
+  },
+  {
+    id:"fluency",
+    title:"Fluency Coach",
+    href:"/Fluency-Coach/", /* placeholder — update when ready */
+    desc:"Practice smooth, paced reading and speaking.",
+    tag:"practice",
+    emoji:"📈"
+  },
+  {
+    id:"late-work",
+    title:"Late Work Notifier",
+    href:"/late-work-notifier/",
+    desc:"Copy a ready-to-send email to your teacher about completed late work.",
+    tag:"utility",
+    emoji:"✉️"
+  }
+];
+
+/* ======= Hub logic ======= */
+const $ = s => document.querySelector(s);
+const favGrid = $('#favGrid');
+const appGrid = $('#appGrid');
+const search = $('#search');
+const chips = document.querySelectorAll('.chip');
+const statusEl = $('#status');
+
+function getFavs(){ return JSON.parse(localStorage.getItem('york_favs')||'[]'); }
+function setFavs(v){ localStorage.setItem('york_favs', JSON.stringify(v)); }
+
+function card(app){
+  const el = document.createElement('div');
+  el.className = 'card';
+  el.dataset.tag = app.tag;
+  el.innerHTML = `
+    <div class="row">
+      <div class="title"><span style="font-size:22px">${app.emoji||'🔗'}</span> ${app.title}</div>
+      <button class="fav" title="Favorite">⭐</button>
+    </div>
+    <div class="desc">${app.desc}</div>
+    <div class="row">
+      <span class="badge">${app.tag}</span>
+      <div class="actions">
+        <a class="btn primary" href="${app.href}" target="_blank" rel="noopener">Open</a>
+        <button class="btn ghost copy">Copy link</button>
+      </div>
+    </div>`;
+  // fav toggle
+  const favBtn = el.querySelector('.fav');
+  if (getFavs().includes(app.id)) favBtn.classList.add('active');
+  favBtn.addEventListener('click', () => {
+    const favs = new Set(getFavs());
+    if (favs.has(app.id)) favs.delete(app.id); else favs.add(app.id);
+    setFavs([...favs]);
+    render();
+  });
+  // copy
+  el.querySelector('.copy').addEventListener('click', async () => {
+    try{
+      await navigator.clipboard.writeText(new URL(app.href, location.origin).href);
+      el.querySelector('.copy').textContent = 'Copied!';
+      setTimeout(()=> el.querySelector('.copy').textContent = 'Copy link', 1200);
+    }catch{
+      prompt('Copy this link:', new URL(app.href, location.origin).href);
+    }
+  });
+  return el;
+}
+
+function render(){
+  const q = search.value.trim().toLowerCase();
+  const activeTag = [...chips].find(c=>c.classList.contains('active')).dataset.tag;
+
+  const favIds = new Set(getFavs());
+  const favs = APPS.filter(a=>favIds.has(a.id));
+  const rest = APPS.filter(a=>!favIds.has(a.id));
+
+  function match(a){
+    const text = (a.title + ' ' + a.desc + ' ' + a.tag).toLowerCase();
+    const tagOK = (activeTag==='all') || (a.tag===activeTag);
+    return tagOK && text.includes(q);
+  }
+
+  favGrid.innerHTML = '';
+  appGrid.innerHTML = '';
+
+  favs.filter(match).forEach(a => favGrid.appendChild(card(a)));
+  rest.filter(match).forEach(a => appGrid.appendChild(card(a)));
+
+  // Show/hide Favorites section if empty
+  favGrid.previousElementSibling.style.display = favGrid.children.length ? 'block' : 'none';
+}
+
+// tag chips
+chips.forEach(ch => ch.addEventListener('click', () => {
+  chips.forEach(x=>x.classList.remove('active'));
+  ch.classList.add('active');
+  render();
+}));
+
+search.addEventListener('input', render);
+
+// simple online status
+function ping(){
+  statusEl.textContent = navigator.onLine ? 'Online' : 'Offline';
+  statusEl.className = navigator.onLine ? 'ok' : '';
+}
+addEventListener('online', ping);
+addEventListener('offline', ping);
+ping();
+
+// initial render
+render();
+</script>
+</body>
+</html>
